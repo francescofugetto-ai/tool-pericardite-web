@@ -177,6 +177,26 @@ document.addEventListener("DOMContentLoaded",function(){
   .cal td.d { font-weight:600; white-space:nowrap; }
   .cal tr.fz td { border-top:1.5px solid var(--border-strong); }
   .liv { font-family:var(--mono); font-size:11px; font-weight:600; color:var(--text-muted); letter-spacing:.04em; text-transform:uppercase; }
+
+  /* selettore adulto / pediatrico e tabella delle durate (01/10/2026) */
+  .solo-ped { display:none; }
+  .ped .solo-adulto { display:none; }
+  .ped .solo-ped { display:block; }
+  table.dur { width:100%; border-collapse:collapse; font-size:13px; margin-top:6px; }
+  table.dur th, table.dur td { text-align:left; vertical-align:top; padding:7px 8px; border-bottom:1px dashed var(--border); overflow-wrap:anywhere; }
+  table.dur th { font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--text-muted); font-weight:600; }
+  table.dur td.nm { font-weight:600; width:150px; }
+  table.dur td.sel { background:var(--accent-blue-bg); }
+  table.dur td .pg { display:block; margin-top:3px; }
+  @media (max-width:600px) {
+    table.dur thead { display:none; }
+    table.dur, table.dur tbody, table.dur tr, table.dur td { display:block; width:100%; }
+    table.dur tr { padding:8px 0; border-bottom:1px dashed var(--border); }
+    table.dur td { border:none; padding:2px 0; }
+    table.dur td.nm { width:100%; font-size:14px; }
+    table.dur td[data-col]::before { content:attr(data-col); display:block; font-size:10.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--text-muted); }
+    table.dur td.sel { background:transparent; border-left:3px solid var(--accent-blue); padding-left:7px; }
+  }
 </style>
 <style data-iphone="stile">
 /* L'avviso e' visibile per costruzione: lo nasconde solo la classe che la
@@ -217,14 +237,14 @@ html.js.motore-ko #nomotore{display:block}
  salva niente: nessun dato esce da qui. Per la stessa ragione, <b>chiudendola il contenuto si
  perde</b> — copia il referto dove ti serve prima di chiudere.
 </div>
-<div class="page">
+<div class="page" id="pagina">
 <header class="hero">
   <div class="kicker">Strumento · Pericardite · ESC 2025</div>
-  <h1 class="headline">Pericardite — il gradino, le dosi e lo scalo</h1>
-  <p class="lede"><strong>Come si usa.</strong> I passi 1–3 descrivono il paziente, la fase della pericardite, il rene e i farmaci già provati: ne esce il <strong>gradino della Fig. 16</strong> con la sua classe, e le <strong>dosi in mg</strong> della Tab. 13 calcolate sul peso. La regola renale, gli anticoagulanti e la gravidanza <strong>decidono</strong> il gradino: un farmaco escluso non riceve una dose. Il passo 4 prende la dose attuale di prednisone e scrive lo <strong>scalo della Tab. 14</strong> passo per passo fino a zero, con la profilassi ossea. <strong>Azzera</strong>, in alto, ricomincia.</p>
+  <h1 class="headline">Pericardite — il gradino, le dosi, la durata e lo scalo</h1>
+  <p class="lede"><strong>Come si usa.</strong> I passi 1–3 descrivono il paziente, la fase della pericardite, il rene e i farmaci già provati: ne esce il <strong>gradino della Fig. 16</strong> con la sua classe, e le <strong>dosi in mg</strong> della Tab. 13 calcolate sul peso. La regola renale, gli anticoagulanti e la gravidanza <strong>decidono</strong> il gradino: un farmaco escluso non riceve una dose. Il passo 4 prende la dose attuale di prednisone e scrive lo <strong>scalo della Tab. 14</strong> passo per passo fino a zero, con la profilassi ossea. <strong>Azzera</strong>, in alto, ricomincia. Il selettore <strong>adulto / pediatrico</strong> del passo 1 cambia le dosi (Tab. 13 o Tab. S15 del supplementare); sotto il gradino c'è la <strong>durata e lo scalo di ogni farmaco</strong>, per il primo episodio e per la recidiva, con le linee successive (anakinra, rilonacept, azatioprina, IVIG).</p>
   <div class="meta-row">
     <span class="meta-chip"><strong>Fonte</strong> 2025 ESC Guidelines for the management of myocarditis and pericarditis</span>
-    <span class="meta-chip"><strong>Calcolo</strong> Tab. 13 e 14 p. 40 · Fig. 16 p. 41 · Rec. Table 10 p. 42 · testo pp. 39–41 · gravidanza e anziano pp. 65–66 · p. 59</span>
+    <span class="meta-chip"><strong>Calcolo</strong> Tab. 13 e 14 p. 40 · Fig. 16 p. 41 · Rec. Table 10 p. 42 · testo pp. 39–41 · gravidanza e anziano pp. 65–66 · p. 59 · Suppl. Tab. S15 e S16 p. 28</span>
   </div>
 </header>
 
@@ -236,15 +256,22 @@ html.js.motore-ko #nomotore{display:block}
   <button class="btn" id="azzera" type="button">Azzera</button>
 </div>
 
-<div class="stage"><span class="stage-n">1</span><span class="stage-t">Il paziente</span><span class="stage-w">Tab. 13–14, p. 40 · pp. 65–66</span></div>
+<div class="stage"><span class="stage-n">1</span><span class="stage-t">Il paziente</span><span class="stage-w">Tab. 13–14, p. 40 · pp. 65–66 · Suppl. Tab. S15, p. 28</span></div>
 <div class="card">
   <div class="row">
-    <span class="fl">Peso<small>kg — decide colchicina, prednisone, anakinra</small></span>
-    <input type="number" id="peso" min="30" max="250" step="0.5" inputmode="decimal" placeholder="es. 72">
-    <span class="fl">Età<small>anni — adulto</small></span>
-    <input type="number" id="eta" min="18" max="110" step="1" inputmode="numeric" placeholder="es. 45">
+    <span class="fl">Popolazione<small>adulto: Tab. 13 · bambino: Tab. S15 del supplementare</small></span>
+    <span class="seg">
+      <label><input type="radio" name="pop" value="adulto"><span>adulto</span></label>
+      <label><input type="radio" name="pop" value="ped"><span>pediatrico</span></label>
+    </span>
   </div>
   <div class="row">
+    <span class="fl">Peso<small>kg — decide le dosi per kg</small></span>
+    <input type="number" id="peso" min="3" max="250" step="0.5" inputmode="decimal" placeholder="es. 72">
+    <span class="fl">Età<small>anni</small></span>
+    <input type="number" id="eta" min="0" max="110" step="1" inputmode="numeric" placeholder="es. 45">
+  </div>
+  <div class="row solo-adulto">
     <span class="fl">Sesso</span>
     <span class="seg">
       <label><input type="radio" name="sesso" value="uomo"><span>uomo</span></label>
@@ -252,7 +279,7 @@ html.js.motore-ko #nomotore{display:block}
     </span>
     <label class="chk" style="border-bottom:none"><input type="checkbox" id="postmen"><span>In postmenopausa<small>per il bisfosfonato</small></span></label>
   </div>
-  <div class="row">
+  <div class="row solo-adulto">
     <span class="fl">Gravidanza o allattamento<small>per una donna</small></span>
     <span class="seg">
       <label><input type="radio" name="grav" value="no"><span>nessuno dei due</span></label>
@@ -260,12 +287,26 @@ html.js.motore-ko #nomotore{display:block}
       <label><input type="radio" name="grav" value="allatt"><span>allattamento</span></label>
     </span>
   </div>
-  <div class="row">
+  <div class="row solo-adulto">
     <span class="fl">Settimana di gestazione</span>
     <input type="number" id="sett" min="1" max="42" step="1" inputmode="numeric" placeholder="es. 16">
   </div>
 </div>
 
+<div class="solo-ped">
+<div class="stage"><span class="stage-n">2</span><span class="stage-t">La pericardite del bambino</span><span class="stage-w">Suppl. Tab. S15, p. 28 · p. 65</span></div>
+<div class="card">
+  <div class="row">
+    <span class="fl">Quadro</span>
+    <span class="seg">
+      <label><input type="radio" name="fp" value="primo"><span>primo episodio</span></label>
+      <label><input type="radio" name="fp" value="ricorrente"><span>recidiva</span></label>
+    </span>
+  </div>
+</div>
+<div class="card" id="outPed"></div>
+</div>
+<div class="solo-adulto">
 <div class="stage"><span class="stage-n">2</span><span class="stage-t">La pericardite</span><span class="stage-w">Fig. 16, p. 41 · Rec. Table 10, p. 42</span></div>
 <div class="card">
   <div class="row">
@@ -356,12 +397,15 @@ html.js.motore-ko #nomotore{display:block}
 <div class="card" id="outScalo"></div>
 <div class="card" id="outOsso"></div>
 
+</div>
+<div class="card" id="outDurata"></div>
+
 <div class="card"><h3>Incoerenze della fonte</h3><div id="outInc"></div></div>
 <div class="card"><h3>Limiti per questo paziente</h3><ul class="lista" id="limiti"></ul></div>
 
 <div class="foot">
   <strong>Fonte.</strong> Schulz-Menger J, Collini V, Gröschel J, et al. 2025 ESC Guidelines for the management of myocarditis and pericarditis. <em>Eur Heart J</em> 2025 (ehaf192) — terapia della pericardite (§ 6.2.2, pp. 39–41), dosi e durate (Tab. 13, p. 40), scalo degli steroidi e profilassi ossea (Tab. 14, p. 40), algoritmo (Fig. 16, p. 41), raccomandazioni (Rec. Table 10, p. 42), colchicina nella profilassi della sindrome post-pericardiotomia (p. 59), gravidanza e allattamento (p. 65; Rec. Table 25, pp. 65–66), anziano (p. 66). Ogni numero mostrato porta la pagina.<br><br>
-  Strumento personale di studio e consultazione: <strong>non sostituisce il giudizio clinico né la scheda tecnica</strong>. Dove la fonte non dice come la dose cambia con il rene, lo strumento scrive «DA VERIFICARE» e non mette un numero. Le dosi in gravidanza e in allattamento vengono dalla Tab. S16 del supplementare; quelle pediatriche (Tab. S15) lo strumento non le calcola. Non salva i dati e non li invia in rete.
+  Strumento personale di studio e consultazione: <strong>non sostituisce il giudizio clinico né la scheda tecnica</strong>. Dove la fonte non dice come la dose cambia con il rene, lo strumento scrive «DA VERIFICARE» e non mette un numero. Le dosi in gravidanza e in allattamento vengono dalla Tab. S16 del supplementare; quelle pediatriche (Tab. S15) si scelgono con il selettore «pediatrico» in alto. Non salva i dati e non li invia in rete.
 </div>
 
 </div>
@@ -414,6 +458,48 @@ html.js.motore-ko #nomotore{display:block}
   // Tab. S16 del supplementare, p. 28: dose iniziale in GRAVIDANZA e ALLATTAMENTO (la tabella non dà né rene né scalo).
   var S16F = { asa:{ min:500, max:1000 }, ibu:{ min:400, max:600 }, indo:{ min:25, max:50 } };
   var S16P = { pred:[2.5, 10], ana:100, aza:[1, 2], ivig:500, giorni:5 };
+  // Tab. S15 del supplementare, p. 28 (bambino): ibuprofene 30-50 mg/kg/die in 3 dosi, massimo 2,4 g/die;
+  // indometacina >2 anni 1-2 mg/kg/die in 2-4 dosi, massimo 4 mg/kg/die, non oltre 150-200 mg/die;
+  // naprossene >2 anni 10 mg/kg/die in 2 dosi (fino a 15 tollerati, non oltre 15); aspirina controindicata;
+  // primo episodio 1-4 settimane, recidive da settimane a mesi; scalo ogni 1-2 settimane solo se asintomatico e PCR normale.
+  var PED = { ibu:{ min:30, max:50, dosi:3, tetto:2400 }, indo:{ min:1, max:2, tetto:[150, 200], eta:2 }, nap:{ dose:10, max:15, dosi:2, eta:2 } };
+  var DOMP = { peso:[3, 80], eta:[0, 17], sett:[1, 42], pred:[0, 100] };   // limiti dello strumento, non della fonte
+
+  // Durata e scalo per farmaco e quadro: Tab. 13 e note a-c p. 40; Fig. 16 e note b p. 41; testo p. 41; Tab. 14 p. 40.
+  var DURATE = [
+    { n:"Aspirina o FANS", linea:"1ª linea",
+      p:"Attacco 1–2 settimane, mantenuto finché sintomi e PCR (ed ECG, eco) non si normalizzano; poi scalo. Con la colchicina lo scalo dura 3–6 mesi, per ridurre le recidive.",
+      r:"Durata estesa in modo individuale e scalo più lento che nel primo episodio.",
+      pg:"Tab. 13 nota a, p. 40; Fig. 16, p. 41; testo p. 41" },
+    { n:"Colchicina", linea:"1ª linea",
+      p:"Almeno 3 mesi (la Tab. 13 scrive 3–6 mesi); lo scalo non è richiesto.",
+      r:"Almeno 6 mesi; si ritira per ultima, solo dopo una remissione stabile; di norma non si scala.",
+      pg:"Tab. 13 e nota b, p. 40; Fig. 16 nota b, p. 41" },
+    { n:"Prednisone", linea:"2ª linea",
+      p:"Non di prima scelta (III C senza indicazione specifica); se serve: attacco 2–4 settimane, poi scalo di diversi mesi, lento sotto i 15 mg/die.",
+      r:"Attacco 2–4 settimane e scalo di diversi mesi (Tab. 14), più lento che nel primo episodio; steroide e colchicina insieme per almeno 6 mesi.",
+      pg:"Tab. 13–14, p. 40; Fig. 16, p. 41; Rec. Table 10, p. 42" },
+    { n:"Anakinra", linea:"3ª linea",
+      p:"Non nel primo episodio: la Tab. 13 la tratta come terapia delle sole recidive.",
+      r:"Almeno 6 mesi / oltre 12 mesi (la cella è una sola con il rilonacept); si scala dopo la remissione clinica — schemi indicati come esempio: una dose in meno a settimana ogni mese, oppure giorni alterni a dose piena per almeno 3 mesi e poi a mezza dose per almeno 3 mesi.",
+      pg:"Tab. 13 e nota a, p. 40" },
+    { n:"Rilonacept", linea:"3ª linea",
+      p:"Non nel primo episodio.",
+      r:"Stessa cella dell'anakinra: almeno 6 mesi / oltre 12 mesi, scalo «necessario (almeno 3–6 mesi) / non noto». Non disponibile in Europa.",
+      pg:"Tab. 13 e nota c, p. 40" },
+    { n:"Azatioprina", linea:"refrattaria",
+      p:"Non nel primo episodio.",
+      r:"Diversi mesi, con scalo di diversi mesi; evidenza limitata.",
+      pg:"Tab. 13, p. 40" },
+    { n:"IVIG", linea:"refrattaria",
+      p:"Non nel primo episodio.",
+      r:"5 giorni; scalo non richiesto.",
+      pg:"Tab. 13, p. 40" },
+    { n:"Idrossiclorochina", linea:"refrattaria",
+      p:"Non nel primo episodio.",
+      r:"IIb B nella ricorrente refrattaria; posologia e durata non pubblicate dalla fonte.",
+      pg:"Rec. Table 10, p. 42", dv:true }
+  ];
   var VOLTE = 3;                                   // «3 times daily», Tab. 13; ogni 8 h, p. 39
   var COLCH = { mg:0.5, soglia:70 };               // Tab. 13 «<70 kg»; p. 59 «≤70 kg»
   var PRED = { min:0.2, max:0.5, grav:20 };        // Tab. 13-14 p. 40; Rec. Table 25 p. 66
@@ -435,17 +521,20 @@ html.js.motore-ko #nomotore{display:block}
 
   /* ═══ FUNZIONI PURE ═══════════════════════════════════════════════════ */
   function r2(x) { return Math.round(x * 100) / 100; }
-  function fuoriDominio(s) {
+  function fuoriDominio(s, dom) {
     var e = [], k;
-    for (k in DOM) if (DOM.hasOwnProperty(k) && s[k] !== null && s[k] !== undefined && (s[k] < DOM[k][0] || s[k] > DOM[k][1])) e.push(k);
+    for (k in dom) if (dom.hasOwnProperty(k) && s[k] !== null && s[k] !== undefined && (s[k] < dom[k][0] || s[k] > dom[k][1])) e.push(k);
     return e;
   }
+  // il modo pediatrico: lo sceglie il selettore, o — senza selettore — un'età sotto i 18 anni
+  function modoPed(s) { return s.pop === "ped" || (s.pop !== "adulto" && s.eta !== null && s.eta !== undefined && s.eta < DOM.eta[0]); }
   function pulisci(s) {
-    var c = {}, k, fd = fuoriDominio(s);
+    var c = {}, k, mp = modoPed(s), fd = fuoriDominio(s, mp ? DOMP : DOM);
     for (k in s) if (s.hasOwnProperty(k)) c[k] = s[k];
     for (var i = 0; i < fd.length; i++) c[fd[i]] = null;
     c.fuoriDom = fd;
-    c.pediatrico = s.eta !== null && s.eta !== undefined && s.eta < DOM.eta[0];
+    c.modoPed = mp;
+    c.pediatrico = mp || (s.eta !== null && s.eta !== undefined && s.eta < DOM.eta[0]);
     if (c.sesso === "uomo") { c.grav = "no"; c.sett = null; }
     if (c.grav !== "grav") c.sett = null;
     return c;
@@ -537,6 +626,22 @@ html.js.motore-ko #nomotore{display:block}
     var a = r2(peso * ANA.min), b = r2(peso * ANA.max);
     return { min:Math.min(a, ANA.tetto), max:Math.min(b, ANA.tetto), tetto: b > ANA.tetto };
   }
+
+  // dosi pediatriche della Tab. S15 (p. 28); il rene non lo dà la fonte e Cockcroft-Gault non vale nel bambino
+  function pedDosi(peso, eta) {
+    var r = { ibu:null, indo:null, nap:null };
+    if (peso === null) return r;
+    var a = r2(peso * PED.ibu.min), b = r2(peso * PED.ibu.max);
+    r.ibu = { min:Math.min(a, PED.ibu.tetto), max:Math.min(b, PED.ibu.tetto), tetto: b > PED.ibu.tetto, tuttoSopra: a > PED.ibu.tetto,
+              dose:{ min:r2(Math.min(a, PED.ibu.tetto) / PED.ibu.dosi), max:r2(Math.min(b, PED.ibu.tetto) / PED.ibu.dosi) } };
+    if (eta === null) { r.indo = { stato:"eta" }; r.nap = { stato:"eta" }; return r; }
+    if (eta <= PED.indo.eta) { r.indo = { stato:"na", confine: eta === PED.indo.eta }; r.nap = { stato:"na", confine: eta === PED.nap.eta }; return r; }
+    var ia = r2(peso * PED.indo.min), ib = r2(peso * PED.indo.max);
+    r.indo = { stato:"ok", min:Math.min(ia, PED.indo.tetto[1]), max:Math.min(ib, PED.indo.tetto[1]), sopra150: ib > PED.indo.tetto[0], tetto200: ib > PED.indo.tetto[1] };
+    var n = r2(peso * PED.nap.dose), nm = r2(peso * PED.nap.max);
+    r.nap = { stato:"ok", dose:n, perDose:r2(n / PED.nap.dosi), tollerati:nm };
+    return r;
+  }
   function fascia(d) { return d > 50 ? 0 : (d > 25 ? 1 : (d >= 15 ? 2 : 3)); }
 
   // scalo della Tab. 14, dalla dose attuale fino a zero
@@ -587,12 +692,12 @@ html.js.motore-ko #nomotore{display:block}
   function rng(a, b, u) { return a === b ? nf(a) + " " + u : nf(a) + "–" + nf(b) + " " + u; }
   var DV = '<span class="dv">DA VERIFICARE</span>';
   var E = "ESC 2025, ";
-  var SUP = "ESC 2025 · Suppl., Tab. S16, p. 28";
+  var SUP = "ESC 2025 · Suppl., Tab. S16, p. 28", SUP15 = "ESC 2025 · Suppl., Tab. S15, p. 28";
   var T13 = E + "Tab. 13, p. 40", T14 = E + "Tab. 14, p. 40", R10 = E + "Rec. Table 10, p. 42", F16 = E + "Fig. 16, p. 41", R25 = E + "Rec. Table 25, pp. 65–66";
 
   function S() {
     return {
-      peso:num("peso"), eta:num("eta"), sesso:radio("sesso"), postmen:ck("postmen"), grav:radio("grav"), sett:num("sett"),
+      pop:radio("pop"), fp:radio("fp"), peso:num("peso"), eta:num("eta"), sesso:radio("sesso"), postmen:ck("postmen"), grav:radio("grav"), sett:num("sett"),
       fase:radio("fase"), pcr:radio("pcr"), cmr:radio("cmr"), recid:ck("recid"), fc75:ck("fc75"),
       rene:radio("rene"), tao:ck("tao"), isch:ck("isch"), altraInd:ck("altraInd"),
       fans:radio("fans"), ster:radio("ster"), il1:radio("il1"),
@@ -671,18 +776,92 @@ html.js.motore-ko #nomotore{display:block}
     return h;
   }
 
+
+  function tabellaDurate(fase) {
+    var sp = fase === "primo", sr = fase === "ricorrente" || fase === "dipendenza";
+    var h = '<h3>Durata e scalo, farmaco per farmaco — primo episodio e recidiva · Tab. 13, p. 40 · Fig. 16, p. 41</h3>';
+    h += '<table class="dur"><thead><tr><th>Farmaco</th><th>Primo episodio</th><th>Incessante o ricorrente</th></tr></thead><tbody>';
+    for (var i = 0; i < DURATE.length; i++) {
+      var d = DURATE[i];
+      h += '<tr><td class="nm" data-col="Farmaco">' + d.n + ' <span class="muted" style="font-weight:400">· ' + d.linea + "</span></td>" +
+        '<td data-col="Primo episodio"' + (sp ? ' class="sel"' : "") + ">" + d.p + "</td>" +
+        '<td data-col="Incessante o ricorrente"' + (sr ? ' class="sel"' : "") + ">" + d.r + (d.dv ? " " + DV : "") + pgs(E + d.pg) + "</td></tr>";
+    }
+    h += "</tbody></table>";
+    h += nota("", "La durata della Tab. 13 è quella <b>della dose d'attacco</b>: si mantiene finché sintomi e marcatori si normalizzano, poi si scala, e va adattata al singolo paziente per gravità e risposta" + pgs(E + "Tab. 13 nota a, p. 40") + ".");
+    if (!fase) h += nota("info", "Scegli la fase della pericardite (passo 2) per evidenziare la colonna che vale per questo paziente.");
+    return h;
+  }
+
+  function disegnaPed(s, dom) {
+    var D = pedDosi(s.peso, s.eta), h = "<h3>Dosi pediatriche degli antinfiammatori — Tab. S15 del supplementare, p. 28</h3>";
+    var fase = s.fp;
+    if (s.peso === null) h += '<div class="esito">' + chip("kx", "—") + '<span class="muted">serve il peso: le dosi sono per kg</span></div>';
+    else {
+      h += '<div class="dose">';
+      h += '<div><span class="n">Aspirina</span> — <b>controindicata nel bambino</b>: rischio di sindrome di Reye ed epatotossicità' + pgs(SUP15) + "; la maggior parte dei pediatri la evita" + pgs(E + "p. 65") + "</div>";
+      var I = D.ibu;
+      h += '<div><span class="n">Ibuprofene</span> 30–50 mg/kg/die in 3 dosi × ' + nf(s.peso) + " kg = <b>" + rng(I.min, I.max, "mg/die") + "</b>, cioè <b>" + rng(I.dose.min, I.dose.max, "mg") + " ogni 8 ore</b>" + pgs(SUP15) +
+        '<br><span class="r">Massimo 2,4 g/die' + (I.tuttoSopra ? " — anche il minimo per kg lo supera: la dose è ferma al tetto" : (I.tetto ? " — il massimo per kg lo supera: la dose è ferma al tetto" : "")) + pgs(SUP15) +
+        "; si parte dal limite basso dell'intervallo e si sale" + pgs(SUP15) + "</span></div>";
+      var N = D.indo;
+      if (N.stato === "eta") h += '<div><span class="n">Indometacina</span> — <b>—</b>: serve l\'età (la tabella dà la dose sopra i 2 anni)' + pgs(SUP15) + "</div>";
+      else if (N.stato === "na") h += '<div><span class="n">Indometacina</span> — non calcolata: la tabella la dà <b>sopra i 2 anni</b>' + (N.confine ? " e questo bambino ha <b>esattamente 2 anni</b>: al confine, lo strumento non la propone" : "") + pgs(SUP15) + "</div>";
+      else h += '<div><span class="n">Indometacina</span> 1–2 mg/kg/die in 2–4 dosi × ' + nf(s.peso) + " kg = <b>" + rng(N.min, N.max, "mg/die") + "</b>" + pgs(SUP15) +
+        '<br><span class="r">Massimo 4 mg/kg/die e comunque non oltre 150–200 mg/die: la fonte dà un intervallo e non dice quale dei due valga' + (N.sopra150 ? " — <b>questa dose supera i 150</b>, resta nel tratto dove la fonte non decide" : "") + (N.tetto200 ? "; ferma a 200" : "") + pgs(SUP15) +
+        "; il tetto dell'adulto della Tab. 13 è 150 mg/die" + pgs(T13) + "</span></div>";
+      var P = D.nap;
+      if (P.stato === "eta") h += '<div><span class="n">Naprossene</span> — <b>—</b>: serve l\'età (la tabella dà la dose sopra i 2 anni)' + pgs(SUP15) + "</div>";
+      else if (P.stato === "na") h += '<div><span class="n">Naprossene</span> — non calcolato: la tabella lo dà <b>sopra i 2 anni</b>' + (P.confine ? " e questo bambino ha <b>esattamente 2 anni</b>: al confine, lo strumento non lo propone" : "") + pgs(SUP15) + "</div>";
+      else h += '<div><span class="n">Naprossene</span> sospensione orale 10 mg/kg/die in 2 dosi × ' + nf(s.peso) + " kg = <b>" + nf(P.dose) + " mg/die</b>, cioè <b>" + nf(P.perDose) + " mg ogni 12 ore</b>" + pgs(SUP15) +
+        '<br><span class="r">Fino a 15 mg/kg/die (= ' + nf(P.tollerati) + " mg/die) sono stati tollerati; non si va oltre" + pgs(SUP15) + ". Nessun tetto in mg: la fonte non lo dà — " + DV + "</span></div>";
+      h += "</div>";
+    }
+    h += '<div class="dose"><div><span class="n">Colchicina</span> dimezza le recidive nel bambino, come nell\'adulto' + pgs(E + "p. 65") + "; <b>dose pediatrica non pubblicata</b>, nemmeno dal supplementare — " + DV + "</div>" +
+      '<div><span class="n">Corticosteroidi</span> da restringere ancora più che nell\'adulto, per gli effetti sulla crescita' + pgs(E + "p. 65") + "; dose non pubblicata — " + DV + "</div>" +
+      '<div><span class="n">Anti-IL-1</span> nuova opzione, soprattutto nel corticodipendente; sospenderli è spesso difficile (solo il 15% li ha interrotti dopo 2,6 anni di follow-up medio) e pochi bambini sono entrati nei trial randomizzati' + pgs(E + "p. 65") + "; dose non pubblicata — " + DV + "</div></div>";
+    h += nota("stop", "<b>Rene:</b> non calcolato. La Cockcroft-Gault è una formula dell'adulto e nel bambino darebbe un numero che sembra una clearance e non lo è; la fonte non dà un aggiustamento per funzione renale e nemmeno una stima pediatrica — " + DV + " accanto a ogni dose.");
+    el("outPed").innerHTML = dom + h;
+
+    var d = '<h3>Durata e scalo — Tab. S15, p. 28</h3><table class="dur"><thead><tr><th>Che cosa</th><th>Primo episodio</th><th>Recidiva</th></tr></thead><tbody>' +
+      '<tr><td class="nm" data-col="Che cosa">Antinfiammatori (ibuprofene, indometacina, naprossene)</td>' +
+      '<td data-col="Primo episodio"' + (fase === "primo" ? ' class="sel"' : "") + ">1–4 settimane" + pgs(SUP15) + "</td>" +
+      '<td data-col="Recidiva"' + (fase === "ricorrente" ? ' class="sel"' : "") + ">Da settimane a mesi; la durata ottimale è discussa e la PCR serve da guida" + pgs(SUP15) + "</td></tr>" +
+      '<tr><td class="nm" data-col="Che cosa">Scalo</td><td data-col="Primo episodio"' + (fase === "primo" ? ' class="sel"' : "") + ">Ogni 1–2 settimane, solo se il bambino è asintomatico e la PCR è normale: non è ben stabilito, lo propone la task force" + pgs(SUP15) + "</td>" +
+      '<td data-col="Recidiva"' + (fase === "ricorrente" ? ' class="sel"' : "") + ">Come nel primo episodio" + pgs(SUP15) + "</td></tr>" +
+      '<tr><td class="nm" data-col="Che cosa">Colchicina, corticosteroidi, anti-IL-1</td><td data-col="Primo episodio"' + (fase === "primo" ? ' class="sel"' : "") + ">Durata non pubblicata — " + DV + "</td>" +
+      '<td data-col="Recidiva"' + (fase === "ricorrente" ? ' class="sel"' : "") + ">Durata non pubblicata — " + DV + "</td></tr></tbody></table>";
+    if (!fase) d += nota("info", "Scegli primo episodio o recidiva per evidenziare la colonna.");
+    el("outDurata").innerHTML = d;
+
+    var bg = el("barGrad"); bg.className = "cat k1"; bg.innerHTML = "pediatrico";
+    var bc = el("barColch"); bc.className = "cat kx"; bc.innerHTML = "—";
+    var bs = el("barScalo"); bs.className = "cat kx"; bs.innerHTML = "—";
+    el("outInc").innerHTML = nota("", "Per il bambino la fonte dà soltanto la Tab. S15 e le frasi di p. 65: le incoerenze elencate per l'adulto non si applicano.");
+    var lim = [];
+    lim.push("Le dosi vengono dal <b>supplementare</b> (Tab. S15, p. 28), non dalla linea guida: la linea guida le rimanda lì" + pgs(E + "p. 65") + ".");
+    lim.push("Nessuna raccomandazione COR/LOE: il supplementare non ne ha, e lo strumento non ne assegna.");
+    lim.push("Rene, colchicina e steroide del bambino: <b>non pubblicati</b>, " + DV + ". Lo strumento non stima la funzione renale.");
+    lim.push("Peso (3–80 kg) ed età (0–17 anni) sono limiti dello strumento, non della fonte; sotto i 3 kg o sopra gli 80 il valore è ignorato.");
+    lim.push("Gravidanza, interazioni e scalo del prednisone sono dell'adulto: nel bambino non si applicano.");
+    el("limiti").innerHTML = "<li>" + lim.join("</li><li>") + "</li>";
+    var og = el("outGrad"); if (og) og.innerHTML = "";
+  }
   function disegna() {
     var s = pulisci(S()), P = piano(s);
     var dom = "";
+    var pg = el("pagina");
+    if (s.modoPed) pg.classList.add("ped"); else pg.classList.remove("ped");
     if (s.fuoriDom.length) {
       var l = [];
       for (var q = 0; q < s.fuoriDom.length; q++) {
-        var k = s.fuoriDom[q];
-        if (k === "eta" && s.pediatrico) l.push("età sotto i 18 anni: lo strumento è per l'adulto — le dosi pediatriche sono nella Tab. S15 del supplementare, che lo strumento non calcola" + pgs(E + "p. 65"));
-        else l.push(ETICH[k] + " (atteso " + nf(DOM[k][0]) + "–" + nf(DOM[k][1]) + ")");
+        var k = s.fuoriDom[q], dd = s.modoPed ? DOMP : DOM;
+        if (k === "eta" && s.pediatrico && !s.modoPed) l.push("età sotto i 18 anni con «adulto» scelto: scegli «pediatrico» per le dosi del bambino (Tab. S15, p. 28)" + pgs(E + "p. 65"));
+        else l.push(ETICH[k] + " (atteso " + nf(dd[k][0]) + "–" + nf(dd[k][1]) + ")");
       }
       dom = nota("stop", "<b>Valore fuori dominio, ignorato:</b> " + l.join("; ") + ". Lo strumento lo tratta come non inserito.");
     }
+    if (s.modoPed) { disegnaPed(s, dom); return; }
     var fase = P.faseEff || s.fase;
 
     /* (a) · il gradino */
@@ -871,6 +1050,7 @@ html.js.motore-ko #nomotore{display:block}
       if (s.recid) hs += nota("info", "Con una recidiva durante lo scalo la dose <b>non si alza</b>" + pgs(E + "pp. 39–40") + (P.F && P.F.dose !== "no" ? ": si aggiunge un FANS e si prosegue la colchicina" + pgs(E + "p. 40") : "; il FANS che la fonte aggiunge qui non è utilizzabile (vedi il gradino)") + ".");
     }
     el("outScalo").innerHTML = hs;
+    el("outDurata").innerHTML = P.pediatrico ? "" : tabellaDurate(s.fase);
 
     /* (e) · profilassi ossea */
     var ho = "<h3>Profilassi ossea — Tab. 14, p. 40</h3>";
@@ -895,7 +1075,7 @@ html.js.motore-ko #nomotore{display:block}
     lim.push("<b>Rene:</b> la fonte parla di funzione «normale, lievemente ridotta, moderata, severa» senza soglie di eGFR" + pgs(E + "Tab. 13 nota b, p. 40") + "; il grado lo sceglie chi usa lo strumento. Di quanto ridurre aspirina e FANS non è scritto; l'aggiustamento di anakinra, rilonacept, azatioprina, IVIG e idrossiclorochina non è riportato — " + DV + ".");
     lim.push("<b>Scalo dei FANS:</b> la Tab. 13 dice «−250 / −200 / −25 mg ogni 1–2 settimane» senza dire se sulla dose singola o sul totale giornaliero: lo strumento non ne scrive il calendario.");
     lim.push("<b>Anziano:</b> la fonte non dà un'età; lo strumento applica le cautele da 65 anni (convenzione dello strumento).");
-    lim.push("Dosi in gravidanza e allattamento dalla Tab. S16 (solo la dose iniziale: né rene né scalo); le pediatriche (Tab. S15) <b>non sono calcolate</b>: sotto i 18 anni lo strumento non calcola.");
+    lim.push("Dosi in gravidanza e allattamento dalla Tab. S16 (solo la dose iniziale: né rene né scalo); le dosi pediatriche (Tab. S15) si calcolano con il selettore «pediatrico» in alto.");
     lim.push("Terapie interventistiche e pericardiectomia sono fuori dalla Fig. 16" + pgs(F16) + " e da questo strumento; le forme specifiche (tubercolare, purulenta, neoplastica) hanno terapie proprie.");
     lim.push("I limiti di plausibilità dei campi (peso 30–250 kg, età 18–110, settimana 1–42, prednisone 0–100 mg) sono dello strumento, non della fonte.");
     el("limiti").innerHTML = "<li>" + lim.join("</li><li>") + "</li>";
@@ -918,7 +1098,7 @@ html.js.motore-ko #nomotore{display:block}
     window.scrollTo(0, 0);
   });
 
-  window.PER_MOTORE = { piano:function (s) { return piano(pulisci(s)); }, colchicina:colchicina, scalo:scalo, osso:osso, dosePred:dosePred, doseAna:doseAna };
+  window.PER_MOTORE = { pedDosi:pedDosi, piano:function (s) { return piano(pulisci(s)); }, colchicina:colchicina, scalo:scalo, osso:osso, dosePred:dosePred, doseAna:doseAna };
   disegna();
 })();
 </script>
