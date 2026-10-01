@@ -361,7 +361,7 @@ html.js.motore-ko #nomotore{display:block}
 
 <div class="foot">
   <strong>Fonte.</strong> Schulz-Menger J, Collini V, Gröschel J, et al. 2025 ESC Guidelines for the management of myocarditis and pericarditis. <em>Eur Heart J</em> 2025 (ehaf192) — terapia della pericardite (§ 6.2.2, pp. 39–41), dosi e durate (Tab. 13, p. 40), scalo degli steroidi e profilassi ossea (Tab. 14, p. 40), algoritmo (Fig. 16, p. 41), raccomandazioni (Rec. Table 10, p. 42), colchicina nella profilassi della sindrome post-pericardiotomia (p. 59), gravidanza e allattamento (p. 65; Rec. Table 25, pp. 65–66), anziano (p. 66). Ogni numero mostrato porta la pagina.<br><br>
-  Strumento personale di studio e consultazione: <strong>non sostituisce il giudizio clinico né la scheda tecnica</strong>. Dove la fonte non dice come la dose cambia con il rene, lo strumento scrive «DA VERIFICARE» e non mette un numero. Le dosi in gravidanza e quelle pediatriche sono nel materiale supplementare, non incorporato. Non salva i dati e non li invia in rete.
+  Strumento personale di studio e consultazione: <strong>non sostituisce il giudizio clinico né la scheda tecnica</strong>. Dove la fonte non dice come la dose cambia con il rene, lo strumento scrive «DA VERIFICARE» e non mette un numero. Le dosi in gravidanza e in allattamento vengono dalla Tab. S16 del supplementare; quelle pediatriche (Tab. S15) lo strumento non le calcola. Non salva i dati e non li invia in rete.
 </div>
 
 </div>
@@ -411,6 +411,9 @@ html.js.motore-ko #nomotore{display:block}
     ibu:  { n:"Ibuprofene",   min:600, max:800,  scalo:200 },  // Tab. 13, p. 40
     indo: { n:"Indometacina", min:25,  max:50,   scalo:25 }    // Tab. 13, p. 40
   };
+  // Tab. S16 del supplementare, p. 28: dose iniziale in GRAVIDANZA e ALLATTAMENTO (la tabella non dà né rene né scalo).
+  var S16F = { asa:{ min:500, max:1000 }, ibu:{ min:400, max:600 }, indo:{ min:25, max:50 } };
+  var S16P = { pred:[2.5, 10], ana:100, aza:[1, 2], ivig:500, giorni:5 };
   var VOLTE = 3;                                   // «3 times daily», Tab. 13; ogni 8 h, p. 39
   var COLCH = { mg:0.5, soglia:70 };               // Tab. 13 «<70 kg»; p. 59 «≤70 kg»
   var PRED = { min:0.2, max:0.5, grav:20 };        // Tab. 13-14 p. 40; Rec. Table 25 p. 66
@@ -584,6 +587,7 @@ html.js.motore-ko #nomotore{display:block}
   function rng(a, b, u) { return a === b ? nf(a) + " " + u : nf(a) + "–" + nf(b) + " " + u; }
   var DV = '<span class="dv">DA VERIFICARE</span>';
   var E = "ESC 2025, ";
+  var SUP = "ESC 2025 · Suppl., Tab. S16, p. 28";
   var T13 = E + "Tab. 13, p. 40", T14 = E + "Tab. 14, p. 40", R10 = E + "Rec. Table 10, p. 42", F16 = E + "Fig. 16, p. 41", R25 = E + "Rec. Table 25, pp. 65–66";
 
   function S() {
@@ -597,13 +601,18 @@ html.js.motore-ko #nomotore{display:block}
   }
   var ETICH = { peso:"peso", eta:"età", sett:"settimana di gestazione", pred:"dose attuale di prednisone" };
 
+  function inGrav(s) { return s.grav === "grav" || s.grav === "allatt"; }
   function doseFans(id, F, s) {
     var d = FANS[id];
+    var gv = inGrav(s) && S16F[id] ? S16F[id] : null;
     var h = '<div><span class="n">' + d.n + "</span> ";
     if (F.dose === "ridotta") {
       h += "a <b>dose ridotta</b>: di quanto, la fonte non lo dice — nessuna dose calcolata — " + DV + pgs(E + "Tab. 13 nota b, p. 40");
     } else {
-      h += "<b>" + d.min + "–" + d.max + " mg 3 volte al giorno</b> (" + nf(d.min * VOLTE) + "–" + nf(d.max * VOLTE) + " mg/die), ogni 8 ore" + pgs(T13 + "; p. 39") +
+      if (gv) h += "<b>" + gv.min + "–" + gv.max + " mg ogni 8 ore</b> (" + nf(gv.min * VOLTE) + "–" + nf(gv.max * VOLTE) + " mg/die) in " + (s.grav === "grav" ? "gravidanza" : "allattamento") + pgs(SUP) +
+        '<br><span class="r">Fuori dalla gravidanza la Tab. 13 dà ' + d.min + "–" + d.max + " mg 3 volte al giorno" + pgs(T13) + "; la fonte non commenta la differenza</span>" +
+        '<br><span class="r">Attacco 1–2 settimane, poi scalo di ' + d.scalo + " mg ogni 1–2 settimane" + pgs(T13) + "</span>";
+      else h += "<b>" + d.min + "–" + d.max + " mg 3 volte al giorno</b> (" + nf(d.min * VOLTE) + "–" + nf(d.max * VOLTE) + " mg/die), ogni 8 ore" + pgs(T13 + "; p. 39") +
         '<br><span class="r">Attacco 1–2 settimane, poi scalo di ' + d.scalo + " mg ogni 1–2 settimane" + pgs(T13) + "</span>";
     }
     return h + "</div>";
@@ -613,6 +622,7 @@ html.js.motore-ko #nomotore{display:block}
     if (d === null) h += " — <b>—</b>: serve il peso" + pgs(T13);
     else {
       h += " × " + nf(s.peso) + " kg = <b>" + rng(d.min, d.max, "mg/die") + "</b>" + pgs(T13 + "; Fig. 16 nota c, p. 41");
+      if (inGrav(s)) h += '<br><span class="r"><b>Tab. S16:</b> dose iniziale <b>' + S16P.pred[0].toString().replace(".", ",") + "–" + S16P.pred[1] + " mg/die</b>, alla minima dose efficace" + pgs(SUP) + ": diversa dal tetto «fino a 20 mg» della Rec. Table 25 — la fonte non le riconcilia</span>";
       if ((s.grav === "grav" || s.grav === "allatt") && d.max > PRED.grav) h += '<br><span class="r"><b>In ' + (s.grav === "grav" ? "gravidanza" : "allattamento") + "</b>: minima dose efficace, preferibilmente fino a 20 mg/die — la dose da peso arriverebbe a " + nf(d.max) + " mg" + pgs(R25) + "</span>";
     }
     h += '<br><span class="r">Attacco 2–4 settimane, poi scalo di diversi mesi (passo 4)' + pgs(T13) + "; 25 mg di prednisone equivalgono a 20 mg di metilprednisolone" + pgs(E + "Tab. 14 nota a, p. 40") + "</span>";
@@ -624,6 +634,7 @@ html.js.motore-ko #nomotore{display:block}
     if (a === null) h += " — <b>—</b>: serve il peso" + pgs(T13);
     else h += " = <b>" + rng(a.min, a.max, "mg/die") + "</b>" + (a.tetto ? " (tetto dei 100 mg)" : "") + pgs(T13);
     h += '<br><span class="r">Durata e scalo in una cella con il rilonacept: «almeno 6 mesi / &gt;12 mesi», «necessario (almeno 3–6 mesi) / non noto»' + pgs(T13) + "; si scala dopo la remissione clinica" + pgs(E + "Tab. 13 nota a, p. 40") + "; preferibile nel rischio infettivo (emivita breve)" + pgs(E + "Tab. 13 nota c, p. 40") + "</span>";
+    if (inGrav(s)) h += '<br><span class="r"><b>Tab. S16:</b> in ' + (s.grav === "grav" ? "gravidanza" : "allattamento") + " <b>" + S16P.ana + " mg/die</b>, «sì» in ogni periodo" + pgs(SUP) + "; il testo (p. 65) la dice controversa, e la fonte non riconcilia le due letture</span>";
     h += '<br><span class="r">Rene: aggiustamento non riportato dalla fonte — ' + DV + "</span></div>";
     if (r.solo === "anakinra") h += '<div class="r">Rilonacept: non proposto — in ' + (s.grav === "grav" ? "gravidanza" : "allattamento") + " la fonte nomina solo l'anakinra" + pgs(E + "p. 65; Rec. Table 25, p. 66") + ".</div>";
     else h += '<div><span class="n">Rilonacept</span> <b>' + RIL.carico + " mg</b>, poi <b>" + RIL.mant + " mg una volta alla settimana</b>" + pgs(T13) +
@@ -633,8 +644,10 @@ html.js.motore-ko #nomotore{display:block}
   }
   function doseRefr(s) {
     var p = s.peso, h = "";
+    var AZA_G = p === null ? "1–2 mg/kg/die" : "1–2 mg/kg/die = " + rng(p * S16P.aza[0], p * S16P.aza[1], "mg/die");
     h += '<div><span class="n">Azatioprina</span> 1 mg/kg/die, poi aumentata gradualmente a 2–3 mg/kg/die' + (p === null ? " — <b>—</b>: serve il peso" : " = <b>" + nf(p * AZA.avvio) + " mg/die</b>, poi <b>" + rng(p * AZA.min, p * AZA.max, "mg/die") + "</b>") + pgs(T13) +
       '<br><span class="r">Per mesi; scalo di mesi' + pgs(T13) + ". Evidenza limitata, più adatta come risparmiatore di steroide" + pgs(E + "p. 40") + '</span><br><span class="r">Rene: aggiustamento non riportato dalla fonte — ' + DV + "</span></div>";
+    if (inGrav(s)) h += '<div class="r"><b>Tab. S16</b>, in ' + (s.grav === "grav" ? "gravidanza" : "allattamento") + ": azatioprina <b>" + AZA_G + "</b> · IVIG <b>500 mg/kg/die per 5 giorni</b>" + (p === null ? "" : " = " + nf(r2(p * S16P.ivig / 1000)) + " g/die") + pgs(SUP) + "</div>";
     h += '<div><span class="n">IVIG</span> 400–500 mg/kg ev al giorno per 5 giorni' + (p === null ? " — <b>—</b>: serve il peso" : " = <b>" + rng(r2(p * IVIG.min / 1000), r2(p * IVIG.max / 1000), "g/die") + "</b> per 5 giorni") + pgs(T13) +
       '<br><span class="r">Provate nella forma refrattaria dopo prime e seconde linee e anti-IL-1' + pgs(E + "p. 40") + '</span><br><span class="r">Rene: aggiustamento non riportato dalla fonte — ' + DV + "</span></div>";
     h += '<div><span class="n">Idrossiclorochina</span> ' + corPill("IIb", "B") + " — dose non riportata dalla fonte — " + DV + pgs(R10) + '<br><span class="r">Rene: non riportato dalla fonte — ' + DV + "</span></div>";
@@ -665,7 +678,7 @@ html.js.motore-ko #nomotore{display:block}
       var l = [];
       for (var q = 0; q < s.fuoriDom.length; q++) {
         var k = s.fuoriDom[q];
-        if (k === "eta" && s.pediatrico) l.push("età sotto i 18 anni: lo strumento è per l'adulto — le dosi pediatriche sono nel materiale supplementare (Tab. S15), non incorporato" + pgs(E + "p. 65"));
+        if (k === "eta" && s.pediatrico) l.push("età sotto i 18 anni: lo strumento è per l'adulto — le dosi pediatriche sono nella Tab. S15 del supplementare, che lo strumento non calcola" + pgs(E + "p. 65"));
         else l.push(ETICH[k] + " (atteso " + nf(DOM[k][0]) + "–" + nf(DOM[k][1]) + ")");
       }
       dom = nota("stop", "<b>Valore fuori dominio, ignorato:</b> " + l.join("; ") + ". Lo strumento lo tratta come non inserito.");
@@ -766,9 +779,9 @@ html.js.motore-ko #nomotore{display:block}
       // gravidanza e allattamento
       if (s.grav === "grav") {
         if (s.sett > GRAV_FANS) h += nota("stop", "<b>Gravidanza, settimana " + s.sett + ":</b> aspirina ad alte dosi e FANS solo fino alla 20ª settimana" + pgs(E + "p. 65") + " — qui esclusi. Steroide alla minima dose efficace, preferibilmente fino a 20 mg/die " + corPill("IIa", "C") + "; colchicina " + corPill("IIb", "C") + pgs(R25) + ".");
-        else h += nota("", "<b>Gravidanza, settimana " + s.sett + ":</b> aspirina ad alte dosi e FANS si possono usare fino alla 20ª settimana" + pgs(E + "p. 65") + "; FANS " + corPill("IIa", "C") + " nella forma incessante/ricorrente" + pgs(R25) + (s.sett === GRAV_FANS ? ". <b>Settimana 20: al confine</b> — «fino alla 20ª»" : "") + ". Steroide alla minima dose efficace, preferibilmente fino a 20 mg/die " + corPill("IIa", "C") + "; colchicina " + corPill("IIb", "C") + pgs(R25) + ". Dosi in gravidanza nel supplementare (Tab. S16), non incorporato — " + DV + ".");
+        else h += nota("", "<b>Gravidanza, settimana " + s.sett + ":</b> aspirina ad alte dosi e FANS si possono usare fino alla 20ª settimana" + pgs(E + "p. 65") + "; FANS " + corPill("IIa", "C") + " nella forma incessante/ricorrente" + pgs(R25) + (s.sett === GRAV_FANS ? ". <b>Settimana 20: al confine</b> — «fino alla 20ª»" : "") + ". Steroide alla minima dose efficace, preferibilmente fino a 20 mg/die " + corPill("IIa", "C") + "; colchicina " + corPill("IIb", "C") + pgs(R25) + ". Dosi in gravidanza: Tab. S16 del supplementare, qui sopra.");
       } else if (s.grav === "allatt") {
-        h += nota("", "<b>Allattamento:</b> tutti questi farmaci si possono usare <b>tranne l'aspirina ad alte dosi</b>" + pgs(E + "p. 65") + "; terapia antinfiammatoria " + corPill("IIa", "C") + " con orari che riducano l'esposizione del lattante; steroide alla minima dose efficace, preferibilmente fino a 20 mg/die " + corPill("IIa", "C") + pgs(R25) + ". Dosi nel supplementare (Tab. S16), non incorporato — " + DV + ".");
+        h += nota("", "<b>Allattamento:</b> tutti questi farmaci si possono usare <b>tranne l'aspirina ad alte dosi</b>" + pgs(E + "p. 65") + "; terapia antinfiammatoria " + corPill("IIa", "C") + " con orari che riducano l'esposizione del lattante; steroide alla minima dose efficace, preferibilmente fino a 20 mg/die " + corPill("IIa", "C") + pgs(R25) + ". Dosi in allattamento: Tab. S16 del supplementare, qui sopra.");
       }
       if (s.fc75) h += nota("info", "<b>FC &gt;75 bpm con sintomi:</b> beta-bloccante " + corPill("IIa", "C") + pgs(R10) + "; ivabradina se il beta-bloccante non si può usare o non è tollerato" + pgs(E + "p. 39") + ". Dosi non riportate dalla fonte — " + DV + ".");
       h += nota("info", "<b>Sempre:</b> restrizione dell'esercizio" + pgs(F16) + " fino alla remissione, almeno 1 mese " + corPill("I", "C") + pgs(E + "Rec. Table 26, p. 66") + ". La dose d'attacco si tiene fino a sintomi risolti e <b>PCR normale</b>, poi si scala; si controllano emocromo, creatinina, CK, transaminasi, PCR ed ecocardiogramma" + pgs(E + "Tab. 13 nota a, p. 40") + ".");
@@ -882,7 +895,7 @@ html.js.motore-ko #nomotore{display:block}
     lim.push("<b>Rene:</b> la fonte parla di funzione «normale, lievemente ridotta, moderata, severa» senza soglie di eGFR" + pgs(E + "Tab. 13 nota b, p. 40") + "; il grado lo sceglie chi usa lo strumento. Di quanto ridurre aspirina e FANS non è scritto; l'aggiustamento di anakinra, rilonacept, azatioprina, IVIG e idrossiclorochina non è riportato — " + DV + ".");
     lim.push("<b>Scalo dei FANS:</b> la Tab. 13 dice «−250 / −200 / −25 mg ogni 1–2 settimane» senza dire se sulla dose singola o sul totale giornaliero: lo strumento non ne scrive il calendario.");
     lim.push("<b>Anziano:</b> la fonte non dà un'età; lo strumento applica le cautele da 65 anni (convenzione dello strumento).");
-    lim.push("Dosi in gravidanza (Tab. S16) e pediatriche (Tab. S15) nel supplementare, <b>non incorporato</b>: sotto i 18 anni lo strumento non calcola.");
+    lim.push("Dosi in gravidanza e allattamento dalla Tab. S16 (solo la dose iniziale: né rene né scalo); le pediatriche (Tab. S15) <b>non sono calcolate</b>: sotto i 18 anni lo strumento non calcola.");
     lim.push("Terapie interventistiche e pericardiectomia sono fuori dalla Fig. 16" + pgs(F16) + " e da questo strumento; le forme specifiche (tubercolare, purulenta, neoplastica) hanno terapie proprie.");
     lim.push("I limiti di plausibilità dei campi (peso 30–250 kg, età 18–110, settimana 1–42, prednisone 0–100 mg) sono dello strumento, non della fonte.");
     el("limiti").innerHTML = "<li>" + lim.join("</li><li>") + "</li>";
